@@ -7,7 +7,7 @@ conn = sqlite3.connect("nfl2018.db")
 c = conn.cursor()
 
 c.execute('''
-CREATE TABLE GAMES(
+CREATE TABLE IF NOT EXISTS GAMES(
     gameId INTEGER PRIMARY KEY UNIQUE NOT NULL,
     gameDate DATE,
     gameTimeEastern TIME,
@@ -17,7 +17,7 @@ CREATE TABLE GAMES(
 )''')
 
 c.execute('''
-CREATE TABLE PLAYERS(
+CREATE TABLE IF NOT EXISTS PLAYERS(
     nflId INTEGER PRIMARY KEY UNIQUE NOT NULL,
     height TEXT,
     weight INTEGER,
@@ -28,7 +28,7 @@ CREATE TABLE PLAYERS(
 )''')
 
 c.execute('''
-CREATE TABLE PLAYS(
+CREATE TABLE IF NOT EXISTS PLAYS(
     gameId INTEGER NOT NULL,
     playId INTEGER,
     playDescription TEXT,
@@ -60,7 +60,7 @@ CREATE TABLE PLAYS(
 )''')
 
 c.execute('''
-CREATE TABLE TRACKS(
+CREATE TABLE IF NOT EXISTS TRACKS(
     time DATETIME,
     x FLOAT,
     y FLOAT,
@@ -87,15 +87,15 @@ CREATE TABLE TRACKS(
 
 conn.commit()
 
-files_l = os.listdir("data")
+files_l = os.listdir("data_feather")
 
-games_path = r"data/games.csv"
-plays_path = r"data/plays.csv"
-players_path = r"data/players.csv"
-tracks_path = ["data/"+f for f in files_l if "week" in f]
+games_path = r"data_feather/games.feather"
+plays_path = r"data_feather/plays.feather"
+players_path = r"data_feather/players.feather"
+tracks_path = ["data_feather/"+f for f in files_l if "week" in f]
 
 def read_and_sql(path, table, con=conn, mode="replace"):
-    file = pd.read_csv(path)
+    file = pd.read_feather(path)
     file.to_sql(table, con, if_exists=mode, index=False)
 
 def sqling():
