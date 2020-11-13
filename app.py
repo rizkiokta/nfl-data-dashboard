@@ -144,7 +144,31 @@ app.layout = html.Div([
                 dcc.Slider(
                     id='time-in-quarter',
                     step=None,
-                )
+                ),
+                html.P('Animation Type'),
+                dcc.Dropdown(
+                    id='animation-type',
+                    options=[
+                        {'label':'Normal', 'value':'N'},
+                        {'label':'Field Control', 'value':'V'}
+                        ],
+                    value='N'
+                ),
+                html.Hr(),
+                html.Div(
+                    id='play-information',
+                    children = 
+                    [
+                        html.Div(id='first-line-info', children='callback not executed'),
+                        html.Div(id='second-line-info', children='callback not executed'),
+                        html.Div(id='third-line-info', children='callback not executed'),
+                        html.Div(id='fourth-line-info', children='callback not executed')
+                    ]
+                ),
+                dcc.Graph(
+                    id='tracks-animation'
+                ),
+                # dcc.
             ]),
             html.Hr(),
         ])
@@ -200,6 +224,41 @@ def update_slider(home_team, visitor_team, quarter):
     gameId = sqling.select_games(home_team, visitor_team, db)['gameId'].values[0]
     df = sqling.select_plays(gameId, quarter, db)[['playId' ,'gameClock']]
     return df.set_index('playId')['gameClock'].to_dict(), df['playId'].values.min(), df['playId'].values.max()
+
+# callback for tracks animation
+@app.callback(
+    [Output('tracks-animation', 'figure'),
+    Output('first-line-info', 'children'),
+    Output('second-line-info', 'children'),
+    Output('third-line-info', 'children'),
+    Output('fourth-line-info', 'children')],
+    [Input('home-team', 'value'),
+    Input('visitor-team', 'value'),
+    Input('quarter-play', 'value'),
+    Input('time-in-quarter', 'value')]
+)
+
+def update_animation(type, home_team, visitor_team, quarter, time):
+    db = sqlite3.connect("nfl2018.db")
+    c = db.cursor()
+    gameId = sqling.select_games(home_team, visitor_team, db)['gameId'].values[0]
+    playId = time
+    play = sqling.select_play(gameId, playId, db)
+    df = sqling.select_tracks(gameId, playId, db)
+    if play.passResult[0] == 'C':
+        play_result = 'complete'
+    else :
+        play_result = 'incomplete'
+    if play.playResult[0] > 0:
+        result_yard = 'gain of'
+    else :
+        result_yard = 'loss of'
+    first_line = f'{play.down[0]} down & {play.yardsToGo[0]} on {play.yardlineSide[0]}{play.yardlineNumber[0]} {play.possessionTeam[0]} offense in {play.offenseFormation[0]} with {play.personnelO[0]}'
+    second_line = f'{home_team}:{play.preSnapHomeScore[0]} {visitor_team}:{play.preSnapVisitorScore[0]}'
+    third_line = f'{play.defendersInTheBox[0]} {visitor_team} in the box with {play.personnelD[0]} rushing {play.numberOfPassRushers[0]} in result {play_result} with {result_yard} {play.playResult[0]} yards'
+    fourth_line = f'{play.playDescription[0]}'
+    play = figure.plotly_animate(df)
+    return play, first_line, second_line, third_line, fourth_line
 
 # callback for filtering reactive table
 @app.callback(

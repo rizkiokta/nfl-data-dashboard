@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS GAMES(
     homeTeamAbbr TEXT,
     visitorTeamAbbr TEXT,
     week INTEGER
+    INDEX gamesIdentifier(gameId)
 )''')
 
 c.execute('''
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS PLAYERS(
     collegeName TEXT,
     position TEXT,
     displayName TEXT
+    INDEX playersIdentifier(nflId)
 )''')
 
 c.execute('''
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS PLAYS(
     epa FLOAT,
     isDefensivePI BOOL,
     FOREIGN KEY (gameId) REFERENCES GAMES(gameId)
+    INDEX playsIdentifier(gameId, playId)
 )''')
 
 c.execute('''
@@ -83,6 +86,7 @@ CREATE TABLE IF NOT EXISTS TRACKS(
     FOREIGN KEY (nflId) REFERENCES PLAYERS(nflId),
     FOREIGN KEY (gameId) REFERENCES GAMES(gameId),
     FOREIGN KEY (playId) REFERENCES PLAYS(playId)
+    INDEX playsIdentifier(gameId, playId, nflId, frameId)
 )''')
 
 conn.commit()
